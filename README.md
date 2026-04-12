@@ -14,7 +14,9 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 ### **System Capabilities & UI Flow**
 
 > [!VIDEO]
+>
 > ### **[CLICK TO PLAY] Full System Walkthrough Demo**
+>
 > [![Demo Video Placeholder](https://img.shields.io/badge/DEMO-WATCH_VIDEO-red?style=for-the-badge&logo=youtube)](./assets/demo/walkthrough.mp4)
 
 | Feature | Visual Preview | Engineering Detail |
@@ -80,12 +82,6 @@ A sophisticated multi-hop search algorithm that simulates human research pattern
 - **Strategic Decision Support**: Automated due diligence through specialized Financial and Legal intelligence modes.
 
 ---
-
-## 🚀 Future Roadmap
-
-- [ ] **v1.5**: Multi-Agent Collaboration (Swarm Intelligence Protocols).
-- [ ] **v2.0**: Specialized SQL-RAG for structured enterprise database integration.
-- [ ] **v2.5**: Local Diffusion-based UI mockup & asset generation.
 
 ---
 
