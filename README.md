@@ -13,20 +13,20 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 
 ### **System Capabilities & UI Flow**
 
-<div align="center">
-  <video src="./assets/demo/walkthrough.mp4" width="100%" controls>
-    Your browser does not support the video tag.
-  </video>
-  <p><i>Full System Walkthrough - From Recursive Research to Multimodal Synthesis</i></p>
-</div>
+https://github.com/ddj069010-sys/local-ai-intelligence-system/raw/main/assets/demo/walkthrough.mp4
+
+> [!TIP]
+> **Full System Walkthrough** - From Recursive Research to Multimodal Synthesis. (If the video above doesn't load, [Click here to view directly](./assets/demo/walkthrough.mp4))
 
 | Feature | Visual Preview | Engineering Detail |
 | :--- | :--- | :--- |
 | **Main Dashboard** | ![Main UI](./assets/screenshots/ui_main.png) | High-fidelity React Bento UI with dynamic theme synchronization. |
 | **Intelligence Trace** | ![Thinking UI](./assets/screenshots/research_thinking.png) | Real-time visualization of recursive Chain-of-Thought (CoT) loops. |
+| **Model Performance** | ![Model Status](./assets/screenshots/model_status.png) | Live monitoring of model load and VRAM scavenging success. |
 | **Agent Micro-Routing** | ![Modes Menu](./assets/screenshots/modes_menu.png) | Granular routing across 40+ specialized logic personas. |
 | **Multimodal RAG** | ![Multimodal Analysis](./assets/screenshots/multimodal_analysis.png) | Cross-functional processing of images, PDFs, and links. |
 | **Enterprise Reports** | ![Enterprise Report](./assets/screenshots/enterprise_report.png) | Structured high-fidelity report generation from raw discovery data. |
+
 
 
 ---
