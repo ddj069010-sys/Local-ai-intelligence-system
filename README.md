@@ -19,11 +19,12 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 | :--- | :--- | :--- |
 | **Main Interface** | ![Main UI](./assets/screenshots/ui_main.png) | High-fidelity React Bento UI with dynamic theme synchronization. |
 | **User Interaction** | ![Screenshot](./assets/screenshots/Screenshot_20260412_195135.png) | Real-time chat dialogue and contextual response generation. |
-| **Research Logic** | ![Thinking UI](./assets/screenshots/Research Thinking.png) | Visualizing recursive Chain-of-Thought (CoT) and discovery loops. |
-| **Model Catalog** | ![Modes Menu](./assets/screenshots/Modes and models.png) | Access point for 20+ specialized intelligence personas. |
-| **Multimodal Terminal** | ![Video Analysis](./assets/screenshots/model_status.png) | Backend processing for video transcripts and external links. |
-| **Backend Orchestration**| ![Backend Terminal](./assets/screenshots/Bakcend Terminal .png) | High-concurrency FastAPI controller and resource management. |
-| **Operational Logs** | ![Execution Logs](./assets/screenshots/Logs of backend when running model.png) | Detailed execution traces during  research tasks. |
+| **Research Logic** | ![Thinking UI](./assets/screenshots/Research%20Thinking.%20.png) | Visualizing recursive Chain-of-Thought (CoT) and discovery loops. |
+| **Model Catalog** | ![Modes Menu](./assets/screenshots/Modes%20and%20models.%20.png) | Access point for 20+ specialized intelligence personas. |
+| **Multimodal Terminal** | ![Video Analysis](./assets/screenshots/Video%20analysis%20Backend%20terminal.%20.png) | Backend processing for video transcripts and external links. |
+| **Backend Orchestration**| ![Backend Terminal](./assets/screenshots/Bakcend%20Terminal%20.png) | High-concurrency FastAPI controller and resource management. |
+| **Operational Logs** | ![Execution Logs](./assets/screenshots/Logs%20of%20backend%20when%20running%20model.png) | Detailed execution traces during  research tasks. |
+
 
 ---
 
