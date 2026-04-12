@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![React](https://img.shields.io/badge/React-18.0+-61DAFB.svg)](https://reactjs.org/)
-[![Performance](https://img.shields.io/badge/VRAM-Optimized-green.svg)](#)
+[![Performance](https://img.shields.io/badge/VRAM-Optimized-green.svg)](https://github.com/ddj069010-sys/local-ai-intelligence-system)
 
 An enterprise-grade, high-fidelity AI research platform designed for autonomous intelligence gathering and complex data synthesis. Built with a focus on **privacy-first local execution**, this project demonstrates advanced capabilities in LLM orchestration, RAG architecture, and multimodal analysis.
 
@@ -83,15 +83,39 @@ A sophisticated multi-hop search algorithm that simulates human research pattern
 
 ---
 
+## 🛠️ Comprehensive Technology Stack & AI Models
+
+### **1. AI & LLM Orchestration**
+- **LLM Engine**: **Ollama** (Local execution for privacy and speed).
+- **Primary Models**:
+  - **Gemma 2 (2b/9b)**: Core reasoning and synthesis.
+  - **Llama 3 (8b)**: Complex logical instruction following.
+  - **Dolphin 2.9 (8b)**: Uncensored, creative research tasks.
+  - **Phi-3 Mini**: Ultra-fast extraction and simple classification.
+- **Embedding Models**: **BGE-Small-EN-v1.5** & **Snowflake-Arctic** for high-precision semantic search.
+
+### **2. Backend Intelligence (Python Ecosystem)**
+- **Framework**: **FastAPI** (Asynchronous, high-performance API).
+- **Vector Database**: **FAISS** (Facebook AI Similarity Search) for local vector sharding.
+- **Speech & Media**:
+  - **OpenAI Whisper**: Local Speech-to-Text (STT).
+  - **Edge-TTS**: Microsoft Azure based Neural Text-to-Speech.
+  - **yt-dlp**: YouTube transcript and metadata extraction.
+- **Data Scavenging**: **Trafilatura**, **BeautifulSoup4**, and **DuckDuckGo API**.
+- **Document Intelligence**: **PyMuPDF**, **python-docx**, **openpyxl**, and **python-pptx**.
+
+### **3. Frontend Experience (Modern Web Tech)**
+- **Framework**: **React 18** powered by **Vite**.
+- **Styling**: **Tailwind CSS** with custom **Bento UI** glassmorphism.
+- **Visualization**: **Mermaid.js** (Live diagrams) & **Monaco Editor** (Code syntax highlighting).
+- **Connectivity**: **Axios** with real-time SSE (Server-Sent Events) for streaming AI tokens.
+
+### **4. System & Infrastructure**
+- **Environment**: Python 3.10+ / Node.js 18+.
+- **OS Support**: Optimized for **Linux (Ubuntu/Debian)** and **macOS**.
+- **VRAM Management**: Integrated `pynvml` and `psutil` for dynamic memory scavenging.
+
 ---
-
-## 🛠️ Installation & Tech Stack
-
-### **Development Environment**
-
-- **Backend**: Python 3.10+, FastAPI, FAISS, Trafilatura.
-- **Frontend**: React 18, Vite, Tailwind CSS, Mermaid.js.
-- **LLM Hub**: Ollama (Supporting Gemma 2, Llama 3, Dolphin, Phi-3).
 
 ### **Quick Setup**
 
