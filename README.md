@@ -13,10 +13,7 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 
 ### **System Capabilities & UI Flow**
 
-https://github.com/ddj069010-sys/local-ai-intelligence-system/blob/main/assets/demo/walkthrough.mp4?raw=true
-
-> [!IMPORTANT]
-> **Click Play above to watch the system in action.** If the video does not load automatically, [click here to watch the source walkthrough](./assets/demo/walkthrough.mp4).
+<https://github.com/ddj069010-sys/local-ai-intelligence-system/blob/main/assets/demo/walkthrough.mp4?raw=true>
 
 | Feature | Visual Preview | Engineering Detail |
 | :--- | :--- | :--- |
@@ -27,8 +24,6 @@ https://github.com/ddj069010-sys/local-ai-intelligence-system/blob/main/assets/d
 | **Multimodal Workflow** | ![Multimodal Analysis](./assets/screenshots/Video%20analysis%20Backend%20terminal.%20.png) | Cross-functional processing of images, PDFs, and video transcripts. |
 | **Terminal Intelligence** | ![Backend Logs](./assets/screenshots/Logs%20of%20backend%20when%20running%20model.%20.png) | Real-time backend logging and resource management. |
 
-
-
 | Feature | Visual Preview | Engineering Detail |
 | :--- | :--- | :--- |
 | **Main Dashboard** | ![Main UI](./assets/screenshots/ui_main.png) | High-fidelity React Bento UI with dynamic theme synchronization. |
@@ -37,8 +32,6 @@ https://github.com/ddj069010-sys/local-ai-intelligence-system/blob/main/assets/d
 | **Agent Micro-Routing** | ![Modes Menu](./assets/screenshots/modes_menu.png) | Granular routing across 40+ specialized logic personas. |
 | **Multimodal RAG** | ![Multimodal Analysis](./assets/screenshots/multimodal_analysis.png) | Cross-functional processing of images, PDFs, and links. |
 | **Enterprise Reports** | ![Enterprise Report](./assets/screenshots/enterprise_report.png) | Structured high-fidelity report generation from raw discovery data. |
-
-
 
 ---
 
@@ -101,6 +94,7 @@ A sophisticated multi-hop search algorithm that simulates human research pattern
 ## 🛠️ Comprehensive Technology Stack & AI Models
 
 ### **1. AI & LLM Orchestration**
+
 - **LLM Engine**: **Ollama** (Local execution for privacy and speed).
 - **Primary Models**:
   - **Gemma 2 (2b/9b)**: Core reasoning and synthesis.
@@ -110,6 +104,7 @@ A sophisticated multi-hop search algorithm that simulates human research pattern
 - **Embedding Models**: **BGE-Small-EN-v1.5** & **Snowflake-Arctic** for high-precision semantic search.
 
 ### **2. Backend Intelligence (Python Ecosystem)**
+
 - **Framework**: **FastAPI** (Asynchronous, high-performance API).
 - **Vector Database**: **FAISS** (Facebook AI Similarity Search) for local vector sharding.
 - **Speech & Media**:
@@ -120,12 +115,14 @@ A sophisticated multi-hop search algorithm that simulates human research pattern
 - **Document Intelligence**: **PyMuPDF**, **python-docx**, **openpyxl**, and **python-pptx**.
 
 ### **3. Frontend Experience (Modern Web Tech)**
+
 - **Framework**: **React 18** powered by **Vite**.
 - **Styling**: **Tailwind CSS** with custom **Bento UI** glassmorphism.
 - **Visualization**: **Mermaid.js** (Live diagrams) & **Monaco Editor** (Code syntax highlighting).
 - **Connectivity**: **Axios** with real-time SSE (Server-Sent Events) for streaming AI tokens.
 
 ### **4. System & Infrastructure**
+
 - **Environment**: Python 3.10+ / Node.js 18+.
 - **OS Support**: Optimized for **Linux (Ubuntu/Debian)** and **macOS**.
 - **VRAM Management**: Integrated `pynvml` and `psutil` for dynamic memory scavenging.
