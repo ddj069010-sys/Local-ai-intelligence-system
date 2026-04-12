@@ -13,10 +13,17 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 
 ### **System Capabilities & UI Flow**
 
-https://github.com/ddj069010-sys/local-ai-intelligence-system/raw/main/assets/demo/walkthrough.mp4
+<div align="center">
+  <video src="https://github.com/ddj069010-sys/local-ai-intelligence-system/raw/main/assets/demo/walkthrough.mp4" width="100%" controls preload="metadata" poster="">
+    <source src="https://github.com/ddj069010-sys/local-ai-intelligence-system/raw/main/assets/demo/walkthrough.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+  <p><i>Full System Walkthrough - Multi-Hop Discovery & Synthesis</i></p>
+</div>
 
 > [!TIP]
-> **Full System Walkthrough** - From Recursive Research to Multimodal Synthesis. (If the video above doesn't load, [Click here to view directly](./assets/demo/walkthrough.mp4))
+> **Pro Tip**: If the player doesn't appear immediately, [Click here to view the video file directly](./assets/demo/walkthrough.mp4).
+
 
 | Feature | Visual Preview | Engineering Detail |
 | :--- | :--- | :--- |
