@@ -18,20 +18,14 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 | Feature | Visual Preview | Engineering Detail |
 | :--- | :--- | :--- |
 | **Main Interface** | ![Main UI](./assets/screenshots/ui_main.png) | High-fidelity React Bento UI with dynamic theme synchronization. |
-| **Recursive Reasoning** | ![Thinking UI](./assets/screenshots/Research%20Thinking.%20.png) | Real-time visualization of recursive Chain-of-Thought (CoT) loops. |
-| **Hardware Orchestration** | ![Model Status](./assets/screenshots/model_status.png) | Live monitoring of model load and VRAM scavenging success. |
-| **Model Catalog** | ![Modes Menu](./assets/screenshots/Modes%20and%20models.%20.png) | Granular routing across 40+ specialized logic personas. |
-| **Multimodal Workflow** | ![Multimodal Analysis](./assets/screenshots/Video%20analysis%20Backend%20terminal.%20.png) | Cross-functional processing of images, PDFs, and video transcripts. |
-| **Terminal Intelligence** | ![Backend Logs](./assets/screenshots/Logs%20of%20backend%20when%20running%20model.%20.png) | Real-time backend logging and resource management. |
+| **User Interaction** | ![Screenshot](./assets/screenshots/Screenshot_20260412_195135.png) | Real-time chat dialogue and contextual response generation. |
+| **Research Logic** | ![Thinking UI](./assets/screenshots/Research%20Thinking.%20.png) | Visualizing recursive Chain-of-Thought (CoT) and discovery loops. |
+| **Model Catalog** | ![Modes Menu](./assets/screenshots/Modes%20and%20models.%20.png) | Access point for 40+ specialized intelligence personas. |
+| **Performance Monitor** | ![Model Status](./assets/screenshots/model_status.png) | Live tracking of model load and VRAM optimization status. |
+| **Multimodal Terminal** | ![Video Analysis](./assets/screenshots/Video%20analysis%20Backend%20terminal.%20.png) | Backend processing for video transcripts and external links. |
+| **Backend Orchestration**| ![Backend Terminal](./assets/screenshots/Bakcend%20Terminal%20.png) | High-concurrency FastAPI controller and resource management. |
+| **Operational Logs** | ![Execution Logs](./assets/screenshots/Logs%20of%20backend%20when%20running%20model.%20.png) | Detailed execution traces during high-complexity research tasks. |
 
-| Feature | Visual Preview | Engineering Detail |
-| :--- | :--- | :--- |
-| **Main Dashboard** | ![Main UI](./assets/screenshots/ui_main.png) | High-fidelity React Bento UI with dynamic theme synchronization. |
-| **Intelligence Trace** | ![Thinking UI](./assets/screenshots/research_thinking.png) | Real-time visualization of recursive Chain-of-Thought (CoT) loops. |
-| **Model Performance** | ![Model Status](./assets/screenshots/model_status.png) | Live monitoring of model load and VRAM scavenging success. |
-| **Agent Micro-Routing** | ![Modes Menu](./assets/screenshots/modes_menu.png) | Granular routing across 40+ specialized logic personas. |
-| **Multimodal RAG** | ![Multimodal Analysis](./assets/screenshots/multimodal_analysis.png) | Cross-functional processing of images, PDFs, and links. |
-| **Enterprise Reports** | ![Enterprise Report](./assets/screenshots/enterprise_report.png) | Structured high-fidelity report generation from raw discovery data. |
 
 ---
 
