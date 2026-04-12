@@ -67,22 +67,11 @@ A sophisticated multi-hop search algorithm that simulates human research pattern
 
 - **K-Means Clustering**: Applied to high-dimensional vector embeddings to group search results and prioritize "signal nodes" over informational noise.
 - **Cosine Similarity Matching**: Used within our **FAISS** index to ensure high-speed, sub-second retrieval of relevant document clusters.
-- **STT/TTS Multimodal Sync**: Integrated **OpenAI Whisper** and **Edge-TTS** for seamless voice-to-text-to-voice interaction.
 
 ### **3. Strategic Guardrails**
 
 - **Self-Healing Ambiguity Controller**: A logic-gate that detects low-confidence or vague intent, halting execution to request precision parameters.
 - **Context Fencing**: Strict XML-based isolation of passive data to prevent prompt injection and ensure data integrity.
-
----
-
-## 💼 Business Impact & Enterprise Utility
-
-- **Executive Intelligence Briefing**: Condenses hours of manual research into a 30-second structured report.
-- **Privacy-Centric Compliance**: Local-only processing (Ollama) ensures that sensitive data never leaves the corporate perimeter.
-- **Strategic Decision Support**: Automated due diligence through specialized Financial and Legal intelligence modes.
-
----
 
 ## 🛠️ Comprehensive Technology Stack & AI Models
 
