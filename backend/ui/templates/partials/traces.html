@@ -1,0 +1,26 @@
+<table>
+    <thead>
+        <tr>
+            <th>Intent</th>
+            <th>Model</th>
+            <th>Latency</th>
+            <th>Proof Score</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for trace in traces %}
+        <tr>
+            <td style="text-transform: uppercase; font-weight: 600;">{{ trace.intent }}</td>
+            <td style="color: var(--text-secondary);">{{ trace.model }}</td>
+            <td>{{ trace.latency }}</td>
+            <td style="font-family: 'JetBrains Mono';">{{ trace.proof_score }}</td>
+            <td>
+                <span class="status-badge status-{{ 'success' if trace.status == 'success' else 'warning' }}">
+                    {{ trace.status.upper() }}
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

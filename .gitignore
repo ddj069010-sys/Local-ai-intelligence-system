@@ -1,0 +1,39 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+
+# Environment & Secrets
+.env
+.env.local
+*.env
+
+# AI Models (Large files — DO NOT commit)
+models/
+*.bin
+*.pt
+*.gguf
+*.onnx
+*.safetensors
+
+# Data & Cache
+data/
+.cache/
+*.log
+
+# OS & IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Uploads
+uploads/
+temp/

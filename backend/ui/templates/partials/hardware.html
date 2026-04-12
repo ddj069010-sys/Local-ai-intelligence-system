@@ -1,0 +1,20 @@
+<div class="metric">
+    <span class="metric-label">VRAM (NVIDIA)</span>
+    <span class="metric-value">{{ hardware.vram_free }} MB Free</span>
+</div>
+<div class="progress-bar">
+    <div class="progress-fill" style="width: {{ hardware.vram_percent }}%"></div>
+</div>
+
+<div class="metric" style="margin-top: 1rem;">
+    <span class="metric-label">System RAM</span>
+    <span class="metric-value">{{ hardware.ram_free }} MB Free</span>
+</div>
+<div class="progress-bar">
+    <div class="progress-fill" style="width: {{ hardware.ram_percent }}%"></div>
+</div>
+
+<div class="metric" style="margin-top: 1rem;">
+    <span class="metric-label">CPU Temperature</span>
+    <span class="metric-value">{{ hardware.cpu_temp }}°C</span>
+</div>

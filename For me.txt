@@ -1,0 +1,8 @@
+frontend
+cd /home/sorbat/Desktop/Test01/LocalAIDevSystem/frontend
+npm run dev
+
+backend
+cd /home/sorbat/Desktop/Test01/LocalAIDevSystem/backend
+# Activation not strictly required if you run directly from venv/bin:
+./venv/bin/python3 main.py
