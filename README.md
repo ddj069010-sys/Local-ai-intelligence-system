@@ -21,7 +21,6 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 | **User Interaction** | ![Screenshot](./assets/screenshots/Screenshot_20260412_195135.png) | Real-time chat dialogue and contextual response generation. |
 | **Research Logic** | ![Thinking UI](./assets/screenshots/Research Thinking.png) | Visualizing recursive Chain-of-Thought (CoT) and discovery loops. |
 | **Model Catalog** | ![Modes Menu](./assets/screenshots/Modes and models.png) | Access point for 20+ specialized intelligence personas. |
-| **Performance Monitor** | ![Model Status](./assets/screenshots/model_status.png) | Live tracking of model load and VRAM optimization status. |
 | **Multimodal Terminal** | ![Video Analysis](./assets/screenshots/model_status.png) | Backend processing for video transcripts and external links. |
 | **Backend Orchestration**| ![Backend Terminal](./assets/screenshots/Bakcend Terminal .png) | High-concurrency FastAPI controller and resource management. |
 | **Operational Logs** | ![Execution Logs](./assets/screenshots/Logs of backend when running model.png) | Detailed execution traces during  research tasks. |
