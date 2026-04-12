@@ -13,17 +13,21 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 
 ### **System Capabilities & UI Flow**
 
-> [!VIDEO]
->
-> ### **[CLICK TO PLAY] Full System Walkthrough Demo**
->
-> [![Demo Video Placeholder](https://img.shields.io/badge/DEMO-WATCH_VIDEO-red?style=for-the-badge&logo=youtube)](./assets/demo/walkthrough.mp4)
+<div align="center">
+  <video src="./assets/demo/walkthrough.mp4" width="100%" controls>
+    Your browser does not support the video tag.
+  </video>
+  <p><i>Full System Walkthrough - From Recursive Research to Multimodal Synthesis</i></p>
+</div>
 
 | Feature | Visual Preview | Engineering Detail |
 | :--- | :--- | :--- |
 | **Main Dashboard** | ![Main UI](./assets/screenshots/ui_main.png) | High-fidelity React Bento UI with dynamic theme synchronization. |
 | **Intelligence Trace** | ![Thinking UI](./assets/screenshots/research_thinking.png) | Real-time visualization of recursive Chain-of-Thought (CoT) loops. |
 | **Agent Micro-Routing** | ![Modes Menu](./assets/screenshots/modes_menu.png) | Granular routing across 40+ specialized logic personas. |
+| **Multimodal RAG** | ![Multimodal Analysis](./assets/screenshots/multimodal_analysis.png) | Cross-functional processing of images, PDFs, and links. |
+| **Enterprise Reports** | ![Enterprise Report](./assets/screenshots/enterprise_report.png) | Structured high-fidelity report generation from raw discovery data. |
+
 
 ---
 
