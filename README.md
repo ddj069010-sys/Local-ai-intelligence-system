@@ -13,16 +13,20 @@ An enterprise-grade, high-fidelity AI research platform designed for autonomous 
 
 ### **System Capabilities & UI Flow**
 
-<div align="center">
-  <video src="https://github.com/ddj069010-sys/local-ai-intelligence-system/raw/main/assets/demo/walkthrough.mp4" width="100%" controls preload="metadata" poster="">
-    <source src="https://github.com/ddj069010-sys/local-ai-intelligence-system/raw/main/assets/demo/walkthrough.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <p><i>Full System Walkthrough - Multi-Hop Discovery & Synthesis</i></p>
-</div>
+https://github.com/ddj069010-sys/local-ai-intelligence-system/blob/main/assets/demo/walkthrough.mp4?raw=true
 
-> [!TIP]
-> **Pro Tip**: If the player doesn't appear immediately, [Click here to view the video file directly](./assets/demo/walkthrough.mp4).
+> [!IMPORTANT]
+> **Click Play above to watch the system in action.** If the video does not load automatically, [click here to watch the source walkthrough](./assets/demo/walkthrough.mp4).
+
+| Feature | Visual Preview | Engineering Detail |
+| :--- | :--- | :--- |
+| **Main Interface** | ![Main UI](./assets/screenshots/ui_main.png) | High-fidelity React Bento UI with dynamic theme synchronization. |
+| **Recursive Reasoning** | ![Thinking UI](./assets/screenshots/Research%20Thinking.%20.png) | Real-time visualization of recursive Chain-of-Thought (CoT) loops. |
+| **Hardware Orchestration** | ![Model Status](./assets/screenshots/model_status.png) | Live monitoring of model load and VRAM scavenging success. |
+| **Model Catalog** | ![Modes Menu](./assets/screenshots/Modes%20and%20models.%20.png) | Granular routing across 40+ specialized logic personas. |
+| **Multimodal Workflow** | ![Multimodal Analysis](./assets/screenshots/Video%20analysis%20Backend%20terminal.%20.png) | Cross-functional processing of images, PDFs, and video transcripts. |
+| **Terminal Intelligence** | ![Backend Logs](./assets/screenshots/Logs%20of%20backend%20when%20running%20model.%20.png) | Real-time backend logging and resource management. |
+
 
 
 | Feature | Visual Preview | Engineering Detail |
