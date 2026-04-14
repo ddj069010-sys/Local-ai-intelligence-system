@@ -74,6 +74,21 @@ A sophisticated multi-hop search algorithm that simulates human research pattern
 - **Self-Healing Ambiguity Controller**: A logic-gate that detects low-confidence or vague intent, halting execution to request precision parameters.
 - **Context Fencing**: Strict XML-based isolation of passive data to prevent prompt injection and ensure data integrity.
 
+### **4. Hardening Intelligence Pipeline (v2.0)**
+
+The system now features a hardened, multi-stage response architecture to eliminate conversational fluff and ensure deterministic, enterprise-grade output:
+
+- **GPT-Level Structural Protocol**: Enforces a mandatory 3-part response layout:
+  1. **HEADER**: Exactly 5 words describing the current action.
+  2. **CONTENT**: High-fidelity, GPT-style synthesis without preambles.
+  3. **FOOTER**: Exactly one relevant follow-up question in italics.
+- **Multi-Stage Response Pipeline**: A **Generate → Validate → Format** workflow that uses `phi3:mini` as a real-time validator to suppress hallucinations and structural errors.
+- **Semantic Intent Routing**: Intelligent routing that automatically selects the best model tier based on query complexity:
+  - **Coding**: Specialized routing to `Qwen3-Coder (30B)`.
+  - **Reasoning**: Advanced logic delegation to `DeepSeek-R1 (32B)`.
+  - **Research/General**: High-performance throughput via `Llama 3.1 (8B)`.
+- **Neural Confidence Gating**: An integrated scoring layer that evaluates answers and halts execution on low-confidence queries (Threshold: 0.5).
+
 ## 🛠️ Comprehensive Technology Stack & AI Models
 
 ### **1. AI & LLM Orchestration**

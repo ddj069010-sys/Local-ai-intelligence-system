@@ -37,6 +37,3 @@ data/
 # Uploads
 uploads/
 temp/
-
-# Documentation
-*.md
