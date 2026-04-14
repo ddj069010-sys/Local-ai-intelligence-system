@@ -22,6 +22,10 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+from .response_pipeline import ResponsePipeline
+from .validators import validate_response
+from .formatter import format_response
+
 # ─────────────────────────────────────────────────────────────
 # 🛠️ UNIFIED PROMPT ARCHITECTURE
 # ─────────────────────────────────────────────────────────────
@@ -37,13 +41,14 @@ def build_system_prompt(role: str, focus: str, format_instructions: str, style: 
 - INTENT AUTO-CORRECTION: Silently handle and auto-correct any misspellings or typos in the user's query based on logical context. Never point out the spelling errors out loud.
 
 OUTPUT RULES (obey in strict order):
-1. {format_instructions}
-2. Style: {style}. Complete and actionable — no placeholders.
-3. THINKING MASK (CoT): Always brainstorm and cross-check facts implicitly inside <think>...</think> XML blocks at the very beginning of your response.
-4. BENTO UI SUPPORT: If comparisons or metrics are needed, use markdown tables or bulleted lists for React Bento Boxes.
-5. GPT-STYLE / LOGIC HARDENING: Emulate the structural elegance of high-parameter GPT models. Use clear logical sections, heavy markdown emphasis (Bold/Italic), and sophisticated transitions. Avoid repetitive 'Introduction/Conclusion' tropes and meta-talk.
-6. TONE [DARK COMEDY]: Infuse explanations and transitions with sharp, dry, cynical dark humor. Keep raw data, facts, and math 100% serious and pure. Inject humor ONLY in the narrative framing, never in the data itself.
-7. LOGO EMOJI VIBE: Always start your response with an interactive logo or emoji vibe check containing a quick line of dark humor, formatted as plain text before the main content."""
+1. HEADER: Start the response with exactly what we are doing here.
+2. CONTENT: {format_instructions}. Style: {style}. Deliver the answer in a sophisticated GPT-style tone.
+3. FOOTER: End the response with exactly one relevant follow-up question in italics.
+4. THINKING MASK (CoT): Always brainstorm and cross-check facts implicitly inside <think>...</think> XML blocks at the very beginning of your response.
+5. BENTO UI SUPPORT: If comparisons or metrics are needed, use markdown tables or bulleted lists for React Bento Boxes.
+6. GPT-STYLE / LOGIC HARDENING: Emulate the structural elegance of high-parameter GPT models.
+7. TONE [DARK COMEDY]: Infuse explanations and transitions with sharp, dry, cynical dark humor. Keep data 100% serious and pure. Inject humor ONLY in the narrative framing, never in the data itself.
+8. LOGO EMOJI VIBE: Always start your response with an interactive logo or emoji vibe check containing a quick line of dark humor, formatted as plain text before the main content."""
 
 
 
@@ -227,10 +232,10 @@ def build_adaptive_system_prompt(role: str, focus: str, format_instructions: str
     return build_system_prompt(role, focus, format_instructions, style)
 
 
-async def compact_chat(question: str, model: str):
+async def compact_chat(question: str, model: str, images: Optional[List[str]] = None):
     """Level-0: Ultra-compact punchy response — bypasses all formatting pipelines."""
     system = "You are a helpful, witty assistant. Reply briefly and conversationally. No markdown headers. Maximum 3 sentences."
-    async for token in call_ollama_stream(question, model, system=system):
+    async for token in call_ollama_stream(question, model, system=system, images=images):
         yield {"type": "message", "text": token}
 
 
@@ -239,7 +244,28 @@ async def compact_chat(question: str, model: str):
 # 1. CORE INTELLIGENCE
 # ─────────────────────────────────────────────────────────────
 
-async def general_chat(question: str, model: str, chat_id: str = "default", system: Optional[str] = None):
+async def enhanced_general_chat(question: str, model: str, chat_id: str = "default", system=None, images=None):
+    pipeline = ResponsePipeline(
+        generator=call_ollama_stream,
+        validator=validate_response,
+        formatter=format_response
+    )
+
+    async for event in pipeline.run(question, model, system, images):
+        yield event
+
+def filter_relevant_history(history, question):
+    q_words = set(question.lower().split())
+    filtered = []
+
+    for h in history:
+        h_words = set(str(h).lower().split())
+        if len(q_words & h_words) >= 2:
+            filtered.append(h)
+
+    return filtered[-5:]
+
+async def general_chat(question: str, model: str, chat_id: str = "default", system: Optional[str] = None, images: Optional[List[str]] = None):
     # --- Adaptive Intelligence: Analyze the prompt before building a response ---
     signals = detect_density_and_style(question)
     density = signals["density"]
@@ -277,26 +303,26 @@ async def general_chat(question: str, model: str, chat_id: str = "default", syst
     
     # Gap 2 Fix: Raise overlap threshold — require 3+ MEANINGFUL (non-stopword) words to match
     if history:
-        q_words = set(question.lower().split()) - CONTEXT_STOP_WORDS
-        history = [m for m in history if len(q_words & (set(str(m).lower().split()) - CONTEXT_STOP_WORDS)) >= 3]
-        history = history[-n_hist:]  # keep most recent relevant messages
+        history = filter_relevant_history(history, question)
     prompt = f"Recent Context:\n{history}\n\nUser Question: {question}" if history else question
-    async for token in call_ollama_stream(prompt, model, system=system):
+    async for token in call_ollama_stream(prompt, model, system=system, images=images):
         yield {"type": "message", "text": token}
 
 
-async def direct_response(question: str, model: str):
+async def direct_response(question: str, model: str, system: Optional[str] = None, images: Optional[List[str]] = None):
     """Bypasses report overhead for small talk / greetings."""
-    system = "Friendly assistant. Reply conversationally. DO NOT use report formatting or headers. Keep it under 2 paragraphs."
-    async for token in call_ollama_stream(question, model, system=system):
+    if not system:
+        system = "Friendly assistant. Reply conversationally. DO NOT use report formatting or headers. Keep it under 2 paragraphs."
+    async for token in call_ollama_stream(question, model, system=system, images=images):
         yield {"type": "message", "text": token}
 
-async def simple_chat(question: str, model: str, chat_id: str = "default"):
+async def simple_chat(question: str, model: str, chat_id: str = "default", system: Optional[str] = None, images: Optional[List[str]] = None):
     """Standard conversational chat with high intelligence but minimal report overhead."""
-    system = "You are a helpful AI. Provide direct, smart, and concise answers. DO NOT use ## headers or complex reports unless asked. Use clean markdown."
+    if not system:
+        system = "You are a helpful AI. Provide direct, smart, and concise answers. DO NOT use ## headers or complex reports unless asked. Use clean markdown."
     history = get_context_messages(chat_id, n=5)
     prompt = f"Previous Context:\n{history}\n\nUser Question: {question}" if history else question
-    async for token in call_ollama_stream(prompt, model, system=system):
+    async for token in call_ollama_stream(prompt, model, system=system, images=images):
         yield {"type": "message", "text": token}
 
 async def summarize_text_mode(question: str, model: str):
@@ -309,12 +335,13 @@ async def summarize_text_mode(question: str, model: str):
     async for token in call_ollama_stream(question, model, system=system):
         yield {"type": "message", "text": token}
 
-async def code_assistant(question: str, model: str):
-    system = build_system_prompt(
-        "Senior Software Architect",
-        "writing production-grade, optimized code.",
-        "Rules: Fenced code blocks only. Provide unit tests. Explain algorithmic complexity (Big O)."
-    )
+async def code_assistant(question: str, model: str, system: Optional[str] = None):
+    if not system:
+        system = build_system_prompt(
+            "Senior Software Architect",
+            "writing production-grade, optimized code.",
+            "Rules: Fenced code blocks only. Provide unit tests. Explain algorithmic complexity (Big O)."
+        )
     async for token in call_ollama_stream(question, model, system=system):
         yield {"type": "message", "text": token}
 
@@ -343,13 +370,14 @@ async def fetch_sources(question: str, model: str):
 # 2. SCIENTIFIC
 # ─────────────────────────────────────────────────────────────
 
-async def math_mode(question: str, model: str):
+async def math_mode(question: str, model: str, system: Optional[str] = None):
     yield {"type": "thought", "text": "Solving Mathematical Logic..."}
-    system = build_system_prompt(
-        "Mathematical Genius", 
-        "solving complex equations and proofs.",
-        "Format: ## Solution, ### Problem Breakdown, ### Step-by-Step Proof (LaTeX), ### Final Answer."
-    )
+    if not system:
+        system = build_system_prompt(
+            "Mathematical Genius", 
+            "solving complex equations and proofs.",
+            "Format: ## Solution, ### Problem Breakdown, ### Step-by-Step Proof (LaTeX), ### Final Answer."
+        )
     async for token in call_ollama_stream(question, model, system=system):
         yield {"type": "message", "text": token}
 
@@ -586,6 +614,55 @@ async def translate_mode(question: str, model: str):
     async for token in call_ollama_stream(question, model, system=system):
         yield {"type": "message", "text": token}
 
+async def context_compressor(question: str, model: str):
+    yield {"type": "thought", "text": "Compressing Context for Density..."}
+    system = (
+        "Summarize the following content into structured notes.\n\n"
+        "Rules:\n"
+        "- Keep ALL important points\n"
+        "- Remove redundancy\n"
+        "- Use bullet points\n"
+        "- Keep it concise but complete\n\n"
+        "Output:\n"
+        "- Headings\n"
+        "- Bullet points"
+    )
+    async for token in call_ollama_stream(question, model, system=system):
+        yield {"type": "message", "text": token}
+
+async def research_pipeline(question: str, model: str):
+    yield {"type": "thought", "text": "Executing Deep Research Pipeline..."}
+    system = (
+        "You are a research assistant.\n\n"
+        "Task:\n"
+        "- Extract key insights\n"
+        "- Remove noise\n"
+        "- Structure information\n\n"
+        "Focus on:\n"
+        "- Concepts\n"
+        "- Definitions\n"
+        "- Actionable points\n\n"
+        "Output format:\n"
+        "1. Summary\n"
+        "2. Key points\n"
+        "3. Actionable insights"
+    )
+    async for token in call_ollama_stream(question, model, system=system):
+        yield {"type": "message", "text": token}
+
+async def polish_response(response_text: str, model: str):
+    """Refinement pass to improve clarity and formatting."""
+    system = (
+        "Improve the response:\n\n"
+        "- Make it clearer\n"
+        "- Remove unnecessary text\n"
+        "- Improve formatting\n"
+        "- Keep meaning unchanged\n\n"
+        "Return final refined answer only."
+    )
+    async for token in call_ollama_stream(response_text, model, system=system):
+        yield {"type": "message", "text": token}
+
 # ─────────────────────────────────────────────────────────────
 # 6. ADVANCED TOOLS
 # ─────────────────────────────────────────────────────────────
@@ -781,7 +858,7 @@ RULES:
 5. confidence < 0.7 -> action=clarify.
 RETURN JSON ONLY."""
 
-GPT_CHAT_HUMAN_PROMPT = """You are a natural human conversational partner (ANTI-AI STYLE).
+GPT_CHAT_HUMAN_PROMPT = """You are a natural human conversational partner.
 GOAL: Sound like a real person talking, not a system explaining.
 
 RULES (HUMAN-LIKE):

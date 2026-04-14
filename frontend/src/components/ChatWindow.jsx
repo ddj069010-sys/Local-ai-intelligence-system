@@ -170,7 +170,7 @@ export default function ChatWindow({
     triggerSearch(lastQuery, historyWithoutLast);
   };
 
-  const triggerSearch = async (queryText, historyMsgs, webEnabled = false, speedMode = 'auto', deepSearch = false, concentrated = false) => {
+  const triggerSearch = async (queryText, historyMsgs, webEnabled = false, speedMode = 'auto', deepSearch = false, concentrated = false, images = null) => {
     setLoading(true);
     setCurrentThought([]);
     
@@ -194,7 +194,8 @@ export default function ChatWindow({
           web_enabled: webEnabled,
           speed_mode: speedMode,
           deep_search: deepSearch,
-          concentrated: concentrated
+          concentrated: concentrated,
+          images: images
         }),
         signal: controller.signal
       });
@@ -212,6 +213,7 @@ export default function ChatWindow({
       setMessages(prev => [...prev, { 
         role: 'assistant', 
         content: '', 
+        images: images,
         thoughts: [],
         executionResults: [], 
         fileResults: [],
@@ -350,11 +352,11 @@ export default function ChatWindow({
     }
   };
 
-  const sendMessage = async (overrideText, webEnabled = false, speedMode = 'auto', deepSearch = false, sandboxMode = false, memorySync = true, concentrated = false) => {
+  const sendMessage = async (overrideText, webEnabled = false, speedMode = 'auto', deepSearch = false, sandboxMode = false, memorySync = true, concentrated = false, images = null) => {
     const queryText = overrideText || input.trim();
-    if (!queryText || loading) return;
+    if ((!queryText && !images) || loading) return;
     
-    const newMsg = { role: 'user', content: queryText };
+    const newMsg = { role: 'user', content: queryText, images: images };
     const updatedMsgs = [...messages, newMsg];
     
     setMessages(updatedMsgs);
@@ -362,7 +364,7 @@ export default function ChatWindow({
     if (refreshSessions) refreshSessions();
     
     // Determine web state from hidden flags or pass current state if MultiInputBox is controlled
-    await triggerSearch(queryText, updatedMsgs, webEnabled, speedMode, deepSearch, concentrated);
+    await triggerSearch(queryText, updatedMsgs, webEnabled, speedMode, deepSearch, concentrated, images);
   };
 
   return (

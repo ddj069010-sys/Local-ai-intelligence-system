@@ -42,6 +42,7 @@ class ChatRequest(BaseModel):
     speed_mode: str = "auto"
     deep_search: bool = False
     concentrated: bool = False
+    images: Optional[List[str]] = None
 
 class MemoryEntry(BaseModel):
     title: str = "Chat Snippet"
@@ -70,12 +71,26 @@ async def chat_stream(request: ChatRequest, fast_req: Request):
         if msg.get("role") == "user":
             question = msg.get("content", "")
             break
-    if not question:
+    if not question and not request.images:
         raise HTTPException(status_code=400, detail="No user message found")
+    
+    # Use a default prompt if image is present but text is empty
+    if not question and request.images:
+        question = "Please analyze this image and describe what you see."
 
     async def event_generator():
         try:
-            async for progress in run_research(question, request.model, request.mode, chat_id=request.session_id, web_enabled=request.web_enabled, speed_mode=request.speed_mode, deep_search=request.deep_search, concentrated=request.concentrated):
+            async for progress in run_research(
+                question, 
+                request.model, 
+                request.mode, 
+                chat_id=request.session_id, 
+                web_enabled=request.web_enabled, 
+                speed_mode=request.speed_mode, 
+                deep_search=request.deep_search, 
+                concentrated=request.concentrated,
+                images=request.images
+            ):
                 if await fast_req.is_disconnected():
                     break
                 yield f"data: {json.dumps(progress)}\n\n"

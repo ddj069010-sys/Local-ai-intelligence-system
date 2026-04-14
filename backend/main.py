@@ -2,6 +2,7 @@ import os
 from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
+from core.middleware import UnifiedMiddleware
 from orchestrator.pipeline_manager import pipeline_manager
 from ui.dashboard import ui_router
 
@@ -32,6 +33,9 @@ async def startup_event():
     
     import asyncio
     asyncio.create_task(model_selector.discover_models())
+
+# Unified Logging & Exception Middleware
+app.add_middleware(UnifiedMiddleware)
 
 # CORS Configuration
 app.add_middleware(

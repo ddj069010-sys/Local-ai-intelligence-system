@@ -8,6 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 import json
+from typing import List, Dict, Any, Optional
 from engine.config import OLLAMA_API_URL
 
 # Set up logging
@@ -238,13 +239,14 @@ _GLOBAL_SYSTEM_PROMPT = """
    - If providing code, always use proper fenced code blocks (```language).
 """
 
-async def call_ollama(prompt: str, model: str, system: str = None, format: str = None) -> str:
+async def call_ollama(prompt: str, model: str, system: str = None, format: str = None, images: Optional[List[str]] = None) -> str:
     final_system = _GLOBAL_SYSTEM_PROMPT
     if system:
         final_system = f"{_GLOBAL_SYSTEM_PROMPT}\n\n### STRICT MODE-SPECIFIC RULES (PRIORITIZE THESE):\n{system}"
     
     payload = {"model": model, "prompt": prompt, "stream": False, "options": {"temperature": 0.2}, "system": final_system, "keep_alive": -1}
     if format: payload["format"] = format
+    if images: payload["images"] = images
     
     max_retries = 2
     for attempt in range(max_retries + 1):
@@ -265,7 +267,7 @@ async def call_ollama(prompt: str, model: str, system: str = None, format: str =
                 await asyncio.sleep(1)
     return ""
 
-async def call_ollama_stream(prompt: str, model: str, system: str = None, format: str = None, yield_dicts: bool = False):
+async def call_ollama_stream(prompt: str, model: str, system: str = None, format: str = None, yield_dicts: bool = False, images: Optional[List[str]] = None):
     """Async generator yielding chunks of tokens from Ollama."""
     final_system = _GLOBAL_SYSTEM_PROMPT
     if system:
@@ -273,6 +275,7 @@ async def call_ollama_stream(prompt: str, model: str, system: str = None, format
     
     payload = {"model": model.lower(), "prompt": prompt, "stream": True, "options": {"temperature": 0.2}, "system": final_system, "keep_alive": -1}
     if format: payload["format"] = format
+    if images: payload["images"] = images
     
     in_thought = False
     buffer = ""
@@ -281,7 +284,14 @@ async def call_ollama_stream(prompt: str, model: str, system: str = None, format
         try:
             async with client.stream("POST", f"{OLLAMA_API_URL}/generate", json=payload) as resp:
                 if resp.status_code != 200:
-                    error_msg = "⚠️ API Error: Unable to connect to local brain."
+                    try:
+                        error_detail = await resp.aread()
+                        error_json = json.loads(error_detail)
+                        detail = error_json.get("error", "Unknown Ollama Error")
+                    except:
+                        detail = "Status Code: " + str(resp.status_code)
+                    
+                    error_msg = f"⚠️ API Error: Unable to connect to local brain. Details: {detail}"
                     yield {"type": "message", "text": error_msg} if yield_dicts else error_msg
                     return
                 async for line in resp.aiter_lines():

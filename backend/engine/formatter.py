@@ -266,3 +266,19 @@ class FormatEngine:
         Currently just returns token as buffering is done at completion.
         """
         return token
+
+from .utils import call_ollama
+
+async def format_response(text: str) -> str:
+    prompt = f"""
+    Improve this answer:
+
+    * clearer
+    * structured
+    * concise
+    * no fluff
+
+    Text:
+    {text}
+    """
+    return await call_ollama(prompt, model="phi3:mini")

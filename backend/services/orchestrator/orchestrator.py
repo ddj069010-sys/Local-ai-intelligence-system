@@ -8,6 +8,32 @@ class Orchestrator:
     def __init__(self, model="gemma3:4b"):
         self.model = model
 
+    async def run_sequenced_chain(self, steps: list, initial_input: str) -> str:
+        """
+        Executes a sequence of models where the output of one serves as the context for the next.
+        Example Steps: [("vision", "What's in this error?"), ("logic", "Why did it happen?"), ("code", "Fix it.")]
+        """
+        current_context = initial_input
+        final_response = ""
+        
+        from engine.model_manager import ModelManager
+        
+        for specialty, instructions in steps:
+            logger.info(f"⛓️ [CHAIN] Activating Specialty: {specialty.upper()}")
+            # Get best model for this specialty
+            model, _ = await ModelManager.get_best_model(mode="chat", question=instructions, purpose=specialty)
+            
+            # Build specialized system prompt
+            primer = ModelManager.SPECIALIZED_PRIMERS.get(specialty, "")
+            full_system = f"{primer}\n{instructions}"
+            
+            # Call Ollama
+            response = await call_ollama(current_context, model, system=full_system)
+            current_context = f"PREVIOUS_STEP_OUTPUT: {response}\n\nORIGINAL_QUESTION: {initial_input}"
+            final_response = response
+            
+        return final_response
+
     async def detect_intent(self, user_input: str) -> dict:
         """Determines the user's intent and which tool to use."""
         system_prompt = """You are the BRAIN of a JARVIS-like agent. 

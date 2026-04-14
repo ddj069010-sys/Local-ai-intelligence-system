@@ -9,18 +9,25 @@ async def evaluate_response(query: str, response: str) -> dict:
     Evaluates the response for clarity, completeness, and relevance.
     """
     prompt = f"""
-    Evaluate the following AI response based on the user query.
+    Evaluate the following AI response against the user query for ENTERPRISE-GRADE quality.
     
     QUERY: "{query}"
     RESPONSE: "{response}"
+    
+    METRICS TO EVALUATE:
+    - CLARITY: Is it jargon-heavy or seamless?
+    - COMPLETENESS: Does it address every part of the query?
+    - INTELLECTUAL DEPTH: Does it provide surface-level vs deep insights?
+    - PREMIUM STRUCTURE: Does it follow a logical, professional hierarchy?
     
     RESPONSE FORMAT (JSON ONLY):
     {{
       "clarity_score": 0-10,
       "completeness_score": 0-10,
-      "relevance_score": 0-10,
+      "intellectual_depth": 0-10,
+      "structure_compliance": 0-10,
       "missing_info": ["point 1", "point 2"],
-      "quality_summary": "overall thought"
+      "improvement_instruction": "Specific instruction for the Format Engine to fix the tone or structure."
     }}
     """
     try:

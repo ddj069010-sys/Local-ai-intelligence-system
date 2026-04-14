@@ -41,6 +41,7 @@ const MultiInputBox = ({
   const [inputType, setInputType] = useState('text');
   const [dragOver, setDragOver] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [fileType, setFileType] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState('');
@@ -102,6 +103,7 @@ const MultiInputBox = ({
     if (['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(ext)) return 'video';
     if (['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'].includes(ext)) return 'audio';
     if (['pdf', 'docx', 'doc', 'txt', 'md'].includes(ext)) return 'document';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext)) return 'image';
     return 'unknown';
   };
 
@@ -110,7 +112,20 @@ const MultiInputBox = ({
     const type = detectFileType(file.name);
     setUploadedFile(file);
     setFileType(type);
-    setInputType('file');
+    
+    if (type === 'image') {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
+    
+    if (type !== 'image') {
+      setInputType('file');
+    }
   };
 
   const handleDragOver = (e) => {
@@ -127,9 +142,12 @@ const MultiInputBox = ({
     setDragOver(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
+      const type = detectFileType(file.name);
       handleFileSelect(file);
-      // Auto-trigger upload logic for immediate attachment
-      handleDirectUpload(file);
+      // Auto-trigger upload logic ONLY for non-image files
+      if (type !== 'image') {
+        handleDirectUpload(file);
+      }
     }
   };
 
@@ -275,14 +293,22 @@ const MultiInputBox = ({
       return;
     }
 
-    if (text.trim()) {
-      onSend && onSend(text.trim(), webEnabled, speedMode, deepSearch, sandboxMode, memorySync, concentratedMode);
+    if (text.trim() || imagePreview) {
+      const imageList = imagePreview ? [imagePreview.split(',')[1]] : null;
+      onSend && onSend(text.trim(), webEnabled, speedMode, deepSearch, sandboxMode, memorySync, concentratedMode, imageList);
       setText('');
+      setUploadedFile(null);
+      setImagePreview(null);
+      setFileType(null);
+      setInputType('text');
     }
   };
 
   const handleDirectUpload = async (file) => {
     if (!file) return;
+    const type = detectFileType(file.name);
+    if (type === 'image') return; // Images handled via onSend
+    
     setProcessing(true);
     setProcessingStatus(`Auto-attaching ${file.name}...`);
     try {
@@ -516,11 +542,20 @@ const MultiInputBox = ({
         )}
 
         {/* FILE PREVIEW */}
-        {uploadedFile && (
+        {(uploadedFile || imagePreview) && (
           <div className="flex items-center gap-3 p-4 border-b border-white/5 bg-white/[0.02]">
-            <div className="p-2.5 rounded-2xl bg-white/5 flex items-center justify-center" style={{ color: FILE_COLORS[fileType] || '#94a3b8' }}>
-              {FILE_ICONS[fileType] || <LinkIcon size={14} />}
-            </div>
+            {imagePreview ? (
+              <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-white/10 group">
+                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                   <div className="text-[8px] font-black text-white uppercase tracking-tighter">AI Ready</div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-2.5 rounded-2xl bg-white/5 flex items-center justify-center" style={{ color: FILE_COLORS[fileType] || '#94a3b8' }}>
+                {FILE_ICONS[fileType] || <LinkIcon size={14} />}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
                <div className="text-[13px] font-bold text-white truncate">{uploadedFile.name}</div>
                <div className="text-[11px] font-medium text-slate-500 uppercase tracking-wider flex items-center gap-1">
@@ -529,7 +564,7 @@ const MultiInputBox = ({
                </div>
             </div>
             <button 
-              onClick={() => { setUploadedFile(null); setFileType(null); setInputType('text'); }}
+              onClick={() => { setUploadedFile(null); setImagePreview(null); setFileType(null); setInputType('text'); }}
               className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-all"
             >
               <X size={16} />

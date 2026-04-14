@@ -65,7 +65,7 @@ async def run_agent_mode(question: str, model: str, chat_id: str = "default"):
     
     if is_greeting or is_extremely_short:
         # Use only small model, skip all logic
-        f_model = await ModelManager.get_best_model(mode="chat", question=question, requested_model="gemma3:4b", purpose="extraction")
+        f_model, _ = await ModelManager.get_best_model(mode="chat", question=question, requested_model="gemma3:4b", purpose="extraction")
         async for event in compact_chat(question, f_model):
             yield event
         return
@@ -74,7 +74,7 @@ async def run_agent_mode(question: str, model: str, chat_id: str = "default"):
     from engine.modes import GPT_GLOBAL_CONTROLLER_PROMPT, gpt_high_fidelity_pipeline
     from engine.utils import call_ollama_json
     
-    c_model = await ModelManager.get_best_model(mode="chat", question=question, requested_model="gemma3:4b", purpose="extraction")
+    c_model, _ = await ModelManager.get_best_model(mode="chat", question=question, requested_model="gemma3:4b", purpose="extraction")
     
     yield {"type": "thought", "text": f"🎯 Master Controller: Analyzing complexity (Engine: {c_model})..."}
     controller_dec = await call_ollama_json(question, model=c_model, system=GPT_GLOBAL_CONTROLLER_PROMPT)
@@ -86,11 +86,11 @@ async def run_agent_mode(question: str, model: str, chat_id: str = "default"):
 
     # STEP 3: MODEL SELECTION FIX (Tiered Hardware Allocation)
     if complexity == "low":
-        target_model = await ModelManager.get_best_model(mode="chat", question=question, requested_model="gemma3:4b", purpose="extraction")
+        target_model, _ = await ModelManager.get_best_model(mode="chat", question=question, requested_model="gemma3:4b", purpose="extraction")
     elif complexity == "medium":
-        target_model = await ModelManager.get_best_model(mode="chat", question=question, requested_model="gemma3:8b", purpose="reasoning")
+        target_model, _ = await ModelManager.get_best_model(mode="chat", question=question, requested_model="gemma3:8b", purpose="reasoning")
     else:
-        target_model = await ModelManager.get_best_model(mode="research", question=question, requested_model=model, purpose="reasoning")
+        target_model, _ = await ModelManager.get_best_model(mode="research", question=question, requested_model=model, purpose="reasoning")
 
     if action in ["answer", "clarify", "execute"]:
         generated_output = ""
@@ -365,8 +365,8 @@ async def run_agent_mode(question: str, model: str, chat_id: str = "default"):
         # --- INTELLIGENCE LAYER: STEP 5 & 6 (Evaluation & Refinement) ---
         # 🔴 STYLE GATE: Skip the refinement pass if a Style Override was detected.
         # Refinement would destroy the tone the user explicitly requested.
-        if is_greeting_or_compact or has_style_override:
-            logger.info("Refinement pass SKIPPED — Natural/Style Gate active.")
+        if has_style_override: # Skip refinement pass only for specific style instructions
+            logger.info("Refinement pass SKIPPED — Style Gate active.")
             return
 
         if enhanced_data:

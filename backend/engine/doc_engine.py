@@ -359,7 +359,7 @@ async def doc_creation_pipeline(question: str, model: str, chat_id: str = "defau
     # ── STEP 1: INTENT DETECTION ──
     yield {"type": "thought", "text": "📝 Doc Engine: Analyzing document intent..."}
 
-    logic_model = await ModelManager.get_best_model(
+    logic_model, _ = await ModelManager.get_best_model(
         mode="chat", question=question, requested_model="gemma3:4b", purpose="extraction"
     )
     intent = await detect_doc_intent(question, model=logic_model)
@@ -378,7 +378,7 @@ async def doc_creation_pipeline(question: str, model: str, chat_id: str = "defau
         version_num = doc_version_store.get_version_count(chat_id)
         yield {"type": "thought", "text": f"✏️ Editor: Modifying v{version_num} ({doc_action})..."}
 
-        gen_model = await ModelManager.get_best_model(
+        gen_model, _ = await ModelManager.get_best_model(
             mode="chat", question=question, requested_model=model, purpose="reasoning"
         )
 
@@ -415,7 +415,7 @@ async def doc_creation_pipeline(question: str, model: str, chat_id: str = "defau
     yield {"type": "thought", "text": f"📐 Structure: \"{title}\" — {len(sections)} sections: {', '.join(sections[:4])}{'...' if len(sections) > 4 else ''}"}
 
     # ── STEP 4: GENERATE ──
-    gen_model = await ModelManager.get_best_model(
+    gen_model, _ = await ModelManager.get_best_model(
         mode="chat", question=question, requested_model=model, purpose="reasoning"
     )
     yield {"type": "thought", "text": f"✍️ Generator: Writing document via {gen_model}..."}

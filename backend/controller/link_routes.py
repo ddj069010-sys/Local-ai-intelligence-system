@@ -94,7 +94,7 @@ async def process_link(request: LinkRequest):
             return JSONResponse(status_code=206, content={"warning": raw["error"], **raw})
 
         raw["content_type"] = content_type
-        extraction_model = await ModelManager.get_best_model(mode="summarize", purpose="extraction")
+        extraction_model, _ = await ModelManager.get_best_model(mode="summarize", purpose="extraction")
         result = await generate_summary(raw, model=extraction_model)
         return result
 
@@ -137,7 +137,7 @@ async def process_upload(
                     WORKSPACE[chat_id] = {"docs": [], "chunks": [], "embeddings": [], "metadata": {}}
                 
                 # Summary for UI display
-                extraction_model = await ModelManager.get_best_model(mode="summarize", purpose="extraction")
+                extraction_model, _ = await ModelManager.get_best_model(mode="summarize", purpose="extraction")
                 summary_data = await generate_summary(raw, model=extraction_model)
                 
                 WORKSPACE[chat_id]["docs"].append({

@@ -21,7 +21,7 @@ class TaskClassifier:
         """
         prompt = f"""
         Analyze the following query and classify it into:
-        1. INTENT: One of [chat, rag, code, vision, web, research]
+        1. INTENT: One of [chat, rag, code, vision, web, research, echo]
         2. COMPLEXITY: One of [low, medium, high, ultra]
         3. REASON: A brief explanation.
 

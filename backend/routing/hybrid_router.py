@@ -12,6 +12,7 @@ class Intent(str, Enum):
     WEB = "web"
     RESEARCH = "research"
     FILE = "file"
+    ECHO = "echo"
 
 class RoutingDecision:
     """Represents a final routing decision."""
@@ -35,6 +36,7 @@ class HybridRouter:
         r"npm install", r"pip install", r"docker"
     ]
     WEB_TAGS = ["@web", "@search", "@online", "@google"]
+    ECHO_TAGS = ["@echo", "repeat after me", "output only the question"]
     
     def __init__(self):
         self.logger = logger
@@ -58,6 +60,10 @@ class HybridRouter:
         # 3. Web Tags Rule
         if any(tag in query_lower for tag in self.WEB_TAGS):
             return RoutingDecision(Intent.WEB, 1.0, "Explicit Web search tag detected in query")
+            
+        # 3.5. Echo Tags Rule
+        if any(tag in query_lower for tag in self.ECHO_TAGS):
+            return RoutingDecision(Intent.ECHO, 1.0, "Explicit Echo/Mirror tag detected")
 
         # 4. Code Pattern Rule
         for pattern in self.CODE_MARKERS:

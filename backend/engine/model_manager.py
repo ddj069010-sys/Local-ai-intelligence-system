@@ -3,31 +3,39 @@ import logging
 import asyncio
 import json
 import os
+import re
 from typing import List, Dict, Optional
-from engine.config import OLLAMA_API_URL
+from .config import OLLAMA_API_URL
+from .prompts import ROUTER_PROMPT, CODING_DNA, REASONING_DNA, VISION_DNA, GENERAL_DNA, ECHO_QUESTION_INJECT, ZERO_FILLER_INJECT
 
 VLLM_API_URL = os.getenv("VLLM_API_URL", "http://localhost:8000/v1")
-
 logger = logging.getLogger(__name__)
 
 class ModelManager:
     _CURRENT_MODEL: Optional[str] = None
 
-    # 🔒 MANUAL-ONLY MODELS — NEVER selected by auto-router, only when user picks them explicitly
+    # 🔒 MANUAL-ONLY MODELS — Very high context, reserved for explicit selection or specialty routing
     MANUAL_ONLY_MODELS = {
-        "deepseek-r1:32b", "deepseek-r1", "deepseek",
-        "qwen3-coder:30b", "qwen3-coder",
-        "qwen2.5:32b", "qwen2:32b", "qwen:32b",
         "llama3.1:70b", "llama3:70b", "llama:70b",
         "gemma3:27b", "gemma:27b"
     }
 
+    # 🏦 STATIC FALLBACK NODE — The "Safest" model to use when routing is ambiguous
+    STATIC_FALLBACK_NODE = "llama3.1:8b"
+
+    # 🧬 SPECIALIZED PRIMERS — High-density intelligence templates
+    SPECIALIZED_PRIMERS = {
+        "coding": "### [ROLE: SENIOR_SOFTWARE_ARCHITECT]\n- FOCUS: Production-grade, optimized code generation.\n- RULES: Use Big-O notation, provide unit tests, and prioritize security/modern patterns.",
+        "reasoning": "### [ROLE: LOGIC_ENGINE_v4]\n- FOCUS: Deep chain-of-thought analysis and mathematical precision.\n- RULES: Break down problems into first principles before deriving a solution.",
+        "research": "### [ROLE: GLOBAL_RESEARCH_DIRECTOR]\n- FOCUS: Factual saturation and multi-source cross-verification.\n- RULES: Cite exact domain/source context, avoid informational noise."
+    }
+
     # Model Tiers based on user's high-performance inventory
     TIERS = {
-        "ultra": ["gemma3:27b", "llama3:70b", "mistral-large", "qwen3:14b"],
-        "high": ["qwen3:14b", "llama3.1:8b", "gemma3:12b", "qwen2.5:7b", "llama3:8b"],
-        "medium": ["gemma3:4b", "phi3:3.8b", "llama3:1b"],
-        "low": ["gemma3:1b", "tinyllama"]
+        "ultra": ["qwen3-coder:30b", "deepseek-r1:32b", "llama3.1:70b", "gemma3:27b"],
+        "high": ["qwen3:14b", "llama3.1:8b", "gemma3:12b", "llava", "qwen3-coder:7b"],
+        "medium": ["gemma3:4b", "llama3:8b", "phi3:3.8b"],
+        "low": ["gemma3:1b", "llama3:1b", "tinyllama"]
     }
 
     # Fast mode: only small models (medium or low tier)
@@ -76,61 +84,36 @@ class ModelManager:
 
     @staticmethod
     def detect_difficulty(question: str) -> str:
-        """Detects question difficulty to suggest a better tier."""
-        q_lower = question.lower()
-        
-        # 1. Simple queries -> Low tier (Basic Chat & Greetings)
-        simple_signals = [
-            "hello", "hi ", "hey ", "test", "ping", "ok", "thanks", "what's up",
-            "good morning", "good evening", "how are you", "who are you", "bye",
-            "goodbye", "see ya", "cool", "nice", "awesome", "perfect", "good job",
-            "yes", "no", "maybe", "sure", "alright", "brilliant", "amazing", "wow",
-            "tell me a joke", "what time is it", "weather", "lol", "lmao", "haha",
-            "greetings", "sup", "yo", "morning", "night", "sweet", "okay"
-        ]
-        
-        # Immediate short-circuit for tiny chat inputs
-        if len(question.strip()) < 25 and any(s in q_lower for s in simple_signals):
-            return "low"
-            
-        # 2. Ultra difficulty signals (AI, Complex Math, Physics, Enterprise Architecture)
-        ultra_signals = [
-            "quantum", "neural network", "machine learning", "backpropagation",
-            "mathematical proof", "distributed system", "kubernetes", "concurrency",
-            "microservices", "asynchronous", "system design", "memory safety", "compiler",
-            "calculus", "differential", "tensor", "transformer model", "large language model",
-            "attention mechanism", "vector database", "cryptography", "encryption algorithm",
-            "blockchain", "smart contract", "zero-knowledge", "homomorphic", "topology",
-            "manifold", "eigenvalue", "stochastic", "probability distribution", "game theory",
-            "nash equilibrium", "high-frequency trading", "kernel panic", "assembly language",
-            "reverse engineering", "malware analysis", "thermodynamics", "fluid dynamics",
-            "aerospace", "astrophysics", "general relativity", "quantum mechanics"
-        ]
-        
-        # 3. High difficulty signals (Standard Coding, DevOps, APIs, IT Analysis)
-        high_signals = [
-            "algorithm", "architecture", "solve", "derivative", "integral", 
-            "optimize", "refactor", "implement", "logic", "explain depth", 
-            "comparison", "pros and cons", "detailed", "python", "rust", 
-            "golang", "c++", "javascript", "react", "database", "sql", "linux", "bash",
-            "html", "css", "docker", "git", "api", "rest", "graphql", "server",
-            "backend", "frontend", "framework", "library", "debug", "error",
-            "exception", "script", "automate", "tutorial", "guide",
-            "how to build", "setup", "configure", "deploy", "hosting"
-        ]
-        
-        ultra_score = sum(1 for signal in ultra_signals if signal in q_lower)
-        high_score = sum(1 for signal in high_signals if signal in q_lower)
-        
-        # Determine exact Tier required
-        if ultra_score >= 1 or len(question) > 800:
-            return "ultra"
-        if high_score >= 2 or len(question) > 300:
-            return "high"
-        if high_score == 1 or len(question) > 80:
-            return "high"
-            
+        """Retired: Complexity is now handled via Specialty Routing and Fast-Pass gating."""
         return "medium"
+
+    @classmethod
+    async def get_specialized_intent(cls, question: str, has_images: bool = False) -> str:
+        """
+        High-fidelity routing logic using a Fast-Pass Node (Gemma-1b).
+        Identifies the optimal specialized model for target logic using the Master Router Prompt.
+        """
+        try:
+            available = await cls.fetch_available_models()
+            router_model = cls._find_available_in_tier("low", available) or "gemma3:1b"
+            
+            if has_images:
+                return "vision"
+
+            from engine.utils import call_ollama_stream
+            
+            # Since we expect a short strict output, we can collect the stream
+            raw_response = ""
+            async for token in call_ollama_stream(question, router_model, system=ROUTER_PROMPT):
+                raw_response += token
+            
+            match = re.search(r"category:\s*(coding|reasoning|vision|general|echo)", raw_response.lower())
+            if match:
+                return match.group(1)
+            return "general"
+        except Exception as e:
+            logger.error(f"Master Router failed: {e}")
+            return "general"
 
     @staticmethod
     async def fetch_available_models() -> List[str]:
@@ -146,7 +129,7 @@ class ModelManager:
         return []
 
     @classmethod
-    async def get_best_model(cls, mode: str, question: str = "", requested_model: Optional[str] = None, purpose: Optional[str] = None, speed_mode: str = "auto") -> tuple[str, str]:
+    async def get_best_model(cls, mode: str, question: str = "", requested_model: Optional[str] = None, purpose: Optional[str] = None, speed_mode: str = "auto", has_images: bool = False) -> tuple[str, str]:
         """
         Determines the best available model. Includes Dolphin-Mode detection 
         for unfiltered/freedom-of-speech routing.
@@ -177,7 +160,7 @@ class ModelManager:
             logger.info("⚡ Fast-Path Triggered: Skipping semantic gateway for short query.")
         
         # 2. Always calculate the Auto-Pick
-        auto_model, auto_reason = await cls._calculate_auto_model(mode, question, purpose, speed_mode, is_unfiltered)
+        auto_model, auto_reason = await cls._calculate_auto_model(mode, question, purpose, speed_mode, is_unfiltered, has_images=has_images)
         
         # 3. Handle Explicit User Selection
         if requested_model and requested_model != "auto":
@@ -187,13 +170,37 @@ class ModelManager:
         return (auto_model, auto_reason)
 
     @classmethod
-    async def _calculate_auto_model(cls, mode: str, question: str = "", purpose: Optional[str] = None, speed_mode: str = "auto", is_unfiltered: bool = False) -> tuple[str, str]:
+    async def _calculate_auto_model(cls, mode: str, question: str = "", purpose: Optional[str] = None, speed_mode: str = "auto", is_unfiltered: bool = False, has_images: bool = False) -> tuple[str, str]:
         """Internal logic for the Intelligence Router."""
         available = await cls.fetch_available_models()
         if not available:
             return ("gemma3:4b", "Fallback: No models detected")
 
-        # 1.  in Pivot: Use uncensored models if intent is unfiltered
+        # 🎯 SPECIALTY ROUTING: High-fidelity specialized node selection
+        # 0. Multimodal Override
+        specialty = await cls.get_specialized_intent(question, has_images=has_images)
+        
+        if has_images or specialty == "vision":
+            # Priority: Gemma3 (Multi-tier) -> LLaVA -> General Fallbacks
+            vision_node = cls._find_available_in_tier("high", available, pattern="gemma3") or \
+                          cls._find_available_in_tier("medium", available, pattern="gemma3") or \
+                          cls._find_available_in_tier("high", available, pattern="llava") or \
+                          cls._find_available_in_tier("medium", available)
+            return (vision_node, f"Multimodal Sync: Image(s) detected. Routing to vision-capable node '{vision_node}'.")
+
+        if specialty == "coding":
+            coder = cls._find_available_in_tier("ultra", available, pattern="qwen") or \
+                    cls._find_available_in_tier("high", available, pattern="coder")
+            if coder: return (coder, f"Optimal Setup: Routing to high-performance Coding Node '{coder}'.")
+        elif specialty == "reasoning":
+            reasoner = cls._find_available_in_tier("ultra", available, pattern="deepseek") or \
+                       cls._find_available_in_tier("high", available, pattern="gemma3:12b")
+            if reasoner: return (reasoner, f"Optimal Setup: Routing to Reasoning/Logic Node '{reasoner}'.")
+        elif specialty == "research":
+            researcher = cls._find_available_in_tier("high", available, pattern="llama3.1")
+            if researcher: return (researcher, f"Optimal Setup: Routing to Research Node '{researcher}'.")
+
+        # 1. in Pivot: Use uncensored models if intent is unfiltered
         if is_unfiltered:
             # Look for dolphin or hermes or uncensored
             unfiltered_keywords = ["dolphin", "hermes", "uncensored", "r1", "nous", "wizardlm"]
@@ -262,11 +269,13 @@ class ModelManager:
             return False
 
     @classmethod
-    def _find_available_in_tier(cls, tier: str, available: List[str]) -> Optional[str]:
+    def _find_available_in_tier(cls, tier: str, available: List[str], pattern: Optional[str] = None) -> Optional[str]:
         tier_models = cls.TIERS.get(tier, [])
         for tm in tier_models:
             for am in available:
                 if am.startswith(tm) or tm in am:
+                    if pattern and pattern.lower() not in am.lower():
+                        continue
                     is_manual_only = any(blocked in am.lower() for blocked in cls.MANUAL_ONLY_MODELS)
                     if not is_manual_only:
                         return am
@@ -369,6 +378,35 @@ class ModelManager:
         except Exception as e:
             logger.error(f"Semantic Gateway failed: {str(e)} - Falling back to Keyword Heuristics.")
             return False
+
+    @classmethod
+    def get_model_system_prompt(cls, model: str, category: Optional[str] = None) -> str:
+        """Dynamic DNA Injection based on model name and identified category."""
+        model_lower = model.lower()
+        
+        # 1. PRIORITY DNA (Category-based)
+        if category == "coding": return CODING_DNA
+        if category == "reasoning": return REASONING_DNA
+        if category == "vision": return VISION_DNA
+        if category == "general": return GENERAL_DNA
+        if category == "echo": return ECHO_QUESTION_INJECT
+
+        # 2. SEED-LEVEL DNA (Keyword-based fallback if category lost)
+        if "coder" in model_lower: return CODING_DNA
+        if "r1" in model_lower: return REASONING_DNA
+        if "llava" in model_lower: return VISION_DNA
+        
+        # 3. LEGACY FALLBACKS
+        if "llama3.1" in model_lower:
+            return (
+                "You are a helpful AI assistant.\n\n"
+                "Rules:\n"
+                "- Be clear and concise\n"
+                "- Avoid unnecessary verbosity\n"
+                "- Structure answers cleanly"
+            )
+
+        return GENERAL_DNA
 
     @staticmethod
     def get_unfiltered_primer() -> str:

@@ -208,8 +208,23 @@ export default function MessageBubble({ message, copyToClipboard, isLatestAssist
     >
 
       {isUser ? (
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl rounded-tr-sm text-white px-6 py-4 shadow-xl whitespace-pre-wrap leading-relaxed text-[18px] max-w-[85%] md:max-w-[60%] border border-white/10">
-          {message.content}
+        <div className="flex flex-col items-end max-w-[85%] md:max-w-[60%] animate-fade-in-up">
+          {message.images && message.images.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2 justify-end">
+              {message.images.map((img, idx) => (
+                <div key={idx} className="relative group/user-img">
+                  <img
+                    src={`data:image/png;base64,${img}`}
+                    alt="User uploaded"
+                    className="w-48 h-48 object-cover rounded-2xl border border-white/10 shadow-lg transition-premium hover:scale-[1.02]"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl rounded-tr-sm text-white px-6 py-4 shadow-xl whitespace-pre-wrap leading-relaxed text-[18px] border border-white/10 w-full">
+            {message.content}
+          </div>
         </div>
       ) : (
         <div className="flex flex-col w-full md:max-w-[90%]">

@@ -7,6 +7,7 @@ import logging
 import base64
 import os
 from engine.config import OLLAMA_API_URL
+from engine.model_manager import ModelManager
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -18,9 +19,11 @@ async def process_image_file(file_path: str, filename: str) -> dict:
             img_bytes = f.read()
             img_b64 = base64.b64encode(img_bytes).decode('utf-8')
 
-        # Use llava for vision analysis
+        # Dynamically find a vision model
+        vision_model, _ = await ModelManager.get_best_model(mode="chat", question="Analyze this image", has_images=True)
+        
         payload = {
-            "model": "llava",
+            "model": vision_model,
             "prompt": "Describe this image in detail. What is in it? Analyze any text or objects visible.",
             "stream": False,
             "images": [img_b64]

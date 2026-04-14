@@ -25,6 +25,12 @@ ULTRA_TIER_MODELS = [
     "qwen3:14b", "qwen2.5:14b" # 14B models are now strictly excluded from auto-logic
 ]
 
+# --- UPGRADE: HIGH-FIDELITY ROUTING ---
+DYNAMIC_ROUTING_ENABLED = True
+ROUTING_FALLBACK_MODEL = "llama3.1:8b"
+PRIMARY_REASONING_MODEL = "deepseek-r1:32b"
+PRIMARY_CODING_MODEL = "qwen3-coder:30b"
+
 MODE_CONFIG = {
     "fast-web": {
         "title": "⚡ Fast Web Search",

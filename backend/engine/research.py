@@ -19,6 +19,7 @@ from .utils import (
     call_ollama_json, cluster_and_rerank
 )
 from .model_manager import ModelManager
+from .prompts import POLISH_PROMPT, ESCALATION_PROMPT, COMPRESSOR_PROMPT
 from .state import WORKSPACE
 from .universal import UniversalEngine, UNIVERSAL_SYSTEM_PROMPT
 from services.scraper.advanced_scraper import advanced_scraper, global_url_analyser
@@ -59,7 +60,8 @@ try:
         seo_mode, creative_write_mode, design_mode, music_theory_mode, 
         recipe_mode, travel_mode, health_mode, wellness_mode, 
         direct_response, simple_chat, arch_mode, cyber_security_mode, career_coach_mode,
-        eco_analyst_mode, social_science_mode, debate_master_mode, philosophy_mode
+        eco_analyst_mode, social_science_mode, debate_master_mode, philosophy_mode,
+        polish_response, context_compressor, research_pipeline
     )
     _MODES_ENABLED = True
 except ImportError:
@@ -223,7 +225,7 @@ def _build_hybrid_context(web, mem):
         for w in web: context += f"- SOURCE: {w.get('source')}\n  CONTENT: {w.get('text', '')[:1500]}\n"
     return context
 
-async def run_research(question: str, model: str = "gemma3:4b", mode: str = "research", chat_id: str = None, web_enabled: bool = False, speed_mode: str = "auto", deep_search: bool = False, concentrated: bool = False):
+async def run_research(question: str, model: str = "gemma3:4b", mode: str = "research", chat_id: str = None, web_enabled: bool = False, speed_mode: str = "auto", deep_search: bool = False, concentrated: bool = False, images: Optional[List[str]] = None):
     # 🏎️ ULTRA-FAST PATH: GREETING & SHORT CHAT BYPASS
     import re
     q_clean = question.strip().lower()
@@ -266,14 +268,14 @@ async def run_research(question: str, model: str = "gemma3:4b", mode: str = "res
     # 🌩️ PARALLEL SCAVENGING: Run discovery tasks simultaneously
     try:
         discovery_results = await asyncio.gather(
-            ModelManager.get_best_model(mode, question, requested_model=model, purpose=purpose, speed_mode=speed_mode),
+            ModelManager.get_best_model(mode, question, requested_model=model, purpose=purpose, speed_mode=speed_mode, has_images=bool(images)),
             UniversalEngine.sync_and_retrieve(question.lower(), chat_id)
         )
         (selected_model_name, gating_reason) = discovery_results[0]
         vector_context = discovery_results[1]
     except Exception as e:
         # Fallback if parallel fails
-        (selected_model_name, gating_reason) = await ModelManager.get_best_model(mode, question, requested_model=model, purpose=purpose, speed_mode=speed_mode)
+        (selected_model_name, gating_reason) = await ModelManager.get_best_model(mode, question, requested_model=model, purpose=purpose, speed_mode=speed_mode, has_images=bool(images))
         vector_context = await UniversalEngine.sync_and_retrieve(question.lower(), chat_id)
     
     # 💾 Trigger explicit switch to unload prior VRAM session
@@ -288,6 +290,26 @@ async def run_research(question: str, model: str = "gemma3:4b", mode: str = "res
         yield {"type": "thought", "text": status_msg}
     else:
         yield {"type": "thought", "text": f"🤖 Engine: Initializing {final_model} as core node."}
+    # 🟢 VISION FAST-PATH: Directly uploaded images (base64) bypass all other routing
+    if images:
+        yield {"type": "thought", "text": "🔭 Vision Engine: Image detected. Routing to multimodal analysis node..."}
+        vision_system = ModelManager.get_model_system_prompt(final_model, category="vision")
+        vision_text = ""
+        try:
+            async for token in call_ollama_stream(question or "Analyze this image and describe what you see.", final_model, system=vision_system, images=images):
+                vision_text += token
+                yield {"type": "message", "text": token}
+        except Exception as ve:
+            logging.error(f"Vision stream failed: {ve}")
+            yield {"type": "thought", "text": f"⚠️ Vision Engine Error: {ve}"}
+        
+        if vision_text.strip():
+            if _MEMORY_ENABLED and chat_id:
+                append_message(chat_id, "user", question, final_model)
+                append_message(chat_id, "assistant", vision_text, final_model)
+            yield {"type": "final_message", "text": vision_text}
+        return
+
     # 🟢 Multimodal Auto-Trigger (FIXED: Selective Trigger)
     has_media = False
     
@@ -421,7 +443,13 @@ async def run_research(question: str, model: str = "gemma3:4b", mode: str = "res
     original_mode = mode
     intent = "simple chat"
 
-    # 📝 STEP 0.PRE: DOCUMENT ENGINE AUTO-ROUTING
+    # 📝 STEP 0.INTENT: MASTER ROUTER CLASSIFICATION
+    category = "general"
+    if mode == "auto" or mode == "research":
+        yield {"type": "thought", "text": "🎯 Master Router: Classifying intelligence intent..."}
+        category = await ModelManager.get_specialized_intent(question, has_images=bool(images))
+        yield {"type": "thought", "text": f"✅ Intelligence Classification: {category.upper()}"}
+        
     _DOC_TRIGGER_KEYWORDS = ["write a ", "create a ", "draft a ", "compose a ", "make a report",
                               "make a doc", "generate a ", "write me", "create me",
                               "write an ", "create an ", "draft an "]
@@ -520,11 +548,16 @@ async def run_research(question: str, model: str = "gemma3:4b", mode: str = "res
         if mode == "fast-web" or web_enabled:
             yield {"type": "thought", "text": "🔍 Verifying digital intelligence signals..."}
 
-    # Step 4: Smart Context Builder (Strictly 3 most recent entries)
+    # Step 4: Smart Context Builder (Deep context retrieval)
     if _MEMORY_ENABLED and chat_id:
-        context = get_context_messages(chat_id, n=3)
+        context = get_context_messages(chat_id, n=5)
         if context:
-            enhanced_question = f"Relevant Context:\n{context}\n\nUser Question: {enhanced_question}"
+            context_str = str(context)
+            if len(context_str) > 1500:
+                yield {"type": "thought", "text": "🗜️ Context Compression: Distilling long conversation history..."}
+                compressed = await call_ollama(context_str, final_model, system=COMPRESSOR_PROMPT)
+                context_str = compressed
+            enhanced_question = f"Relevant Context:\n{context_str}\n\nUser Question: {enhanced_question}"
 
     # Persistence for user original query
     if _MEMORY_ENABLED and chat_id:
@@ -547,9 +580,16 @@ async def run_research(question: str, model: str = "gemma3:4b", mode: str = "res
     if concentrated:
         system_instruction = "STRICT INSTRUCTION: Provide the answer ONLY. Do NOT use emojis, do NOT use headers like 'Executive Summary', and do NOT lead with pleasantries. Provide a high-density, direct answer based strictly on available context."
 
-    # 🔓 DOLPHIN ISOLATION: Use only the simplified roleplay primer for unfiltered requests
+    # 🧬 MODEL DNA INJECTION: Apply model-specific system prompts
+    model_dna = ModelManager.get_model_system_prompt(final_model, category=category)
     if is_unfiltered or "dolphin" in final_model.lower():
-        system_instruction = ModelManager.get_unfiltered_primer()
+        system_instruction = model_dna
+    else:
+        # Append specialized DNA to existing instructions
+        if system_instruction:
+            system_instruction = f"{system_instruction}\n\n{model_dna}"
+        else:
+            system_instruction = model_dna
 
     # 🗂️ RAG AUTO-TRIGGER: Check if query should use local docs
     _rag_triggered = False
@@ -587,22 +627,8 @@ async def run_research(question: str, model: str = "gemma3:4b", mode: str = "res
 
     # Update mode_map to use final_model for all calls and support context injection
     mode_map = {
-        "chat": lambda **kwargs: general_chat(kwargs.get("question", enhanced_question), final_model, chat_id=chat_id, system=kwargs.get("system", system_instruction)),
-        "simple": lambda **kwargs: simple_chat(kwargs.get("question", enhanced_question), final_model, chat_id=chat_id),
-        "direct": lambda **kwargs: direct_response(kwargs.get("question", enhanced_question), final_model), 
-        "code": lambda **kwargs: code_assistant(kwargs.get("question", enhanced_question), final_model),
-        "optimize": lambda **kwargs: optimize_query(kwargs.get("question", enhanced_question), final_model),
-        "sources": lambda **kwargs: fetch_sources(kwargs.get("question", enhanced_question), final_model),
-        "compare": lambda **kwargs: compare_entities(kwargs.get("question", enhanced_question), final_model),
-        "explain": lambda **kwargs: explain_mode(kwargs.get("question", enhanced_question), final_model),
-        "fact-check": lambda **kwargs: fact_checker_mode(kwargs.get("question", enhanced_question), final_model),
-        "learn": lambda **kwargs: learning_mode(kwargs.get("question", enhanced_question), final_model),
-        "plan": lambda **kwargs: planner_mode(kwargs.get("question", enhanced_question), final_model),
-        "debug": lambda **kwargs: debug_mode(kwargs.get("question", enhanced_question), final_model),
-        "memory": lambda **kwargs: memory_insight(kwargs.get("question", enhanced_question), final_model, chat_id=chat_id),
-        "url": lambda **kwargs: summarize_url(kwargs.get("question", enhanced_question), final_model),
-        "translate": lambda **kwargs: translate_mode(kwargs.get("question", enhanced_question), final_model),
-        "summarize": lambda **kwargs: summarize_text_mode(kwargs.get("question", enhanced_question), final_model),
+        "translate": lambda **kwargs: translate_mode(kwargs.get("question", enhanced_question), final_model, system=kwargs.get("system", system_instruction)),
+        "summarize": lambda **kwargs: summarize_text_mode(kwargs.get("question", enhanced_question), final_model, system=kwargs.get("system", system_instruction)),
         "write": lambda **kwargs: write_mode(kwargs.get("question", enhanced_question), final_model),
         "multi-chat": lambda **kwargs: multi_chat_mode(kwargs.get("question", enhanced_question), final_model, chat_id=chat_id),
         "rag": lambda **kwargs: rag_document_mode(kwargs.get("question", _rag_context_prompt or enhanced_question), final_model) if _rag_triggered else local_knowledge(kwargs.get("question", enhanced_question), final_model, system=kwargs.get("system", system_instruction)),
@@ -634,57 +660,122 @@ async def run_research(question: str, model: str = "gemma3:4b", mode: str = "res
         "research": lambda **kwargs: smart_search_pipeline(kwargs.get("question", enhanced_question + tool_context), final_model, chat_id, system=kwargs.get("system", system_instruction)),
     }
 
-    # 🟢 CORE EXECUTION LOOP
+    # 🟢 SELF-HEALING EXECUTION LOOP
     if mode in mode_map:
-        # Initialize variables for BOTH paths (Standard & Dolphin) to prevent UnboundLocalError
+        attempt_model = final_model
         final_text = ""
         execution_results = []
         file_results = []
-
-        # 🔓 DOLPHIN RECURSIVE REFINEMENT (Alpha Intelligence Pass)
-        if is_unfiltered:
-            yield {"type": "thought", "text": "⚡ Dolphin Alpha: Synthesizing raw intelligence..."}
-            full_response = ""
-            async for event in mode_map[mode]():
-                # Stream first pass to user
-                if isinstance(event, dict) and event.get("type") == "message":
-                    full_response += event["text"]
-                yield event
+        
+        for attempt in range(2):
+            vram_error_detected = False
+            first_chunk_checked = False
             
-            # Recursive pass for high-density refinement
-            if len(full_response) > 200:
-                yield {"type": "thought", "text": "💎 Neural Refining: Enhancing fluency and intellectual depth..."}
-                refinement_prompt = (
-                    "REFINEMENT TASK: Take the following information and rewrite it for maximum fluency, impact, and detail. "
-                    "DETACH from any robotic structures. DELETE all headers like 'Summary', 'Takeaways', or 'Disclaimer'. "
-                    "Provide a seamless, high-fidelity GPT-style response that directly fulfills the intent.\n\n"
-                    f"TEXT:\n{full_response}"
-                )
-                # Note: We trigger a second pass with the mode_map using the new refined prompt
-                async for event in mode_map[mode](question=refinement_prompt):
+            if is_unfiltered:
+                yield {"type": "thought", "text": "⚡ Dolphin Alpha: Synthesizing raw intelligence..."}
+                full_response = ""
+                async for event in mode_map[mode](model=attempt_model):
+                    if isinstance(event, dict) and event.get("type") == "message":
+                        txt = event.get("text", "")
+                        if not first_chunk_checked:
+                            if "CUDA error" in txt or "resource allocation failed" in txt:
+                                vram_error_detected = True
+                                first_chunk_checked = True
+                                break
+                            first_chunk_checked = True
+                        full_response += txt
                     yield event
-        else:
-            async for event in mode_map[mode]():
-                # ROBUSTNESS: Ensure event is a dict
-                if isinstance(event, str):
-                    event = {"type": "message", "text": event}
+                
+                if vram_error_detected:
+                    # Retry logic handled below the if/else
+                    pass
+                elif len(full_response) > 200:
+                    yield {"type": "thought", "text": "💎 Neural Refining: Enhancing fluency and intellectual depth..."}
+                    refinement_prompt = (
+                        "REFINEMENT TASK: Take the following information and rewrite it for maximum fluency, impact, and detail. "
+                        "DETACH from any robotic structures. DELETE all headers like 'Summary', 'Takeaways', or 'Disclaimer'. "
+                        "Provide a seamless, high-fidelity GPT-style response that directly fulfills the intent.\n\n"
+                        f"TEXT:\n{full_response}"
+                    )
+                    async for event in mode_map[mode](question=refinement_prompt, model=attempt_model):
+                        yield event
+            else:
+                async for event in mode_map[mode](model=attempt_model):
+                    if isinstance(event, str):
+                        event = {"type": "message", "text": event}
 
-                if event.get("type") == "message":
-                    final_text += event.get("text", "")
-                elif event.get("type") == "thought":
-                     # Silence thoughts for Simple/Direct modes if preferred
-                     if mode in ["simple", "direct"]: continue
-                elif event.get("type") == "execution_result":
-                    execution_results.append(event)
-                elif event.get("type") == "file_result":
-                    file_results.append(event)
-                yield event
+                    if event.get("type") == "message":
+                        txt = event.get("text", "")
+                        if not first_chunk_checked:
+                            if "CUDA error" in txt or "resource allocation failed" in txt:
+                                vram_error_detected = True
+                                first_chunk_checked = True
+                                break
+                            first_chunk_checked = True
+                        final_text += txt
+                    elif event.get("type") == "thought":
+                         if mode in ["simple", "direct"]: continue
+                    elif event.get("type") == "execution_result":
+                        execution_results.append(event)
+                    elif event.get("type") == "file_result":
+                        file_results.append(event)
+                    yield event
+            
+            if vram_error_detected and attempt == 0:
+                yield {"type": "thought", "text": "🚨 VRAM Exhausted: GPU memory allocation failed for the selected model."}
+                fallback_model = "gemma3:4b" 
+                yield {"type": "thought", "text": f"🔄 Self-Healing: Automatically falling back to lighter multimodal node '{fallback_model}'..."}
+                attempt_model = fallback_model
+                final_text = ""
+                execution_results = []
+                file_results = []
+                continue
+            
+            # 🚀 INTELLIGENT ESCALATION: Retry if response is insufficient
+            if not final_text.strip() or (len(final_text.strip()) < 80 and not is_unfiltered and attempt == 0):
+                yield {"type": "thought", "text": "⚠️ Response Insufficiency: Initial synthesis below target entropy."}
+                yield {"type": "thought", "text": "🚀 Escalating to High-Density Retrieval DNA..."}
+                
+                escalated_response = ""
+                async for token in call_ollama_stream(question, attempt_model, system=ESCALATION_PROMPT):
+                    if isinstance(token, str):
+                        yield {"type": "message", "text": token}
+                        escalated_response += token
+                
+                if escalated_response.strip():
+                    final_text = escalated_response
+            break
+        
+        # 💎 MASTER POLISHING PASS (For High-Fidelity Modes)
+        if (mode in ["research", "deep"] or category in ["coding", "reasoning"]) and final_text and not is_unfiltered:
+            yield {"type": "thought", "text": "💎 Master Polishing: Finalizing response with GPT-level fidelity..."}
+            
+            # We use a separate stream to polish the final_text
+            polished_text = ""
+            yield {"type": "thought", "text": "✨ Professionalizing tone and markdown structure..."}
+            
+            # The polisher replaces the final output in the UI's perspective
+            # Here we just stream it as a special polishing event
+            async for token in call_ollama_stream(final_text, final_model, system=POLISH_PROMPT):
+                if isinstance(token, str):
+                    yield {"type": "message", "text": token}
+                    polished_text += token
+            
+            if polished_text.strip():
+                final_text = polished_text
         
         # Step 8 & 9: Neural Proofing & Refinement (The Enterprise Format Engine)
         try:
-            # Hard-Toggle: Skip for Dolphin (is_unfiltered) OR if deep_search is False.
-            if mode not in ["direct"] and not concentrated and deep_search and not is_unfiltered:
-                if len(final_text) > 400:
+            # 🧠 ADAPTIVE FORMATTING: Trigger if deep_search is active OR if the response is substantive.
+            # 🛡️ BYPASS: Specially hardened DNA categories (coding/reasoning/vision) skip this to avoid conversational fluff.
+            is_specialist = category in ["coding", "reasoning", "vision"]
+            is_professional = any(kw in question.lower() for kw in ["professional", "technical", "detailed", "robust", "expert", "complex", "implementation"])
+            is_vision_context = bool(images) or "vision" in final_model.lower()
+            
+            should_format = (not is_specialist and mode not in ["direct"] and not concentrated and not is_unfiltered and not is_vision_context) and (deep_search or len(final_text) > 400 or is_professional)
+
+            if should_format:
+                if len(final_text) > 100: # Minimum threshold for meaningful formatting
                     yield {"type": "thought", "text": "🧠 Enterprise Proofer: Evaluating response against neural logic..."}
                     evaluation = await evaluate_response(question, final_text)
                     yield {"type": "thought", "text": "🧠 Format Engine: Applying professional structure and rules..."}
@@ -695,6 +786,43 @@ async def run_research(question: str, model: str = "gemma3:4b", mode: str = "res
                 if mode not in ["direct"] and not concentrated:
                     yield {"type": "thought", "text": "⚡ Fast Output Mode: Enterprise Format Engine Bypassed."}
             
+            # 🚀 INTELLIGENT ESCALATION (Smart retry if insufficient)
+            words = final_text.split()
+            if not is_vision_context and ((len(words) < 15 and not is_greeting and mode not in ["direct", "simple"]) or "i don't know" in final_text.lower() or "not found" in final_text.lower()):
+                yield {"type": "thought", "text": "🔄 Intelligent Escalation: Initial response insufficient. Activating deeper reasoning pass..."}
+                
+                # Escalate to a higher tier model if not already using one
+                escalation_model = final_model
+                if "gemma" in final_model.lower() or "llama" in final_model.lower():
+                    available = await ModelManager.fetch_available_models()
+                    escalation_model = ModelManager._find_available_in_tier("high", available) or "deepseek-r1:32b"
+                
+                escalation_prompt = (
+                    "The previous response may be insufficient.\n\n"
+                    "Re-evaluate the problem with deeper reasoning.\n"
+                    "Improve accuracy and completeness.\n\n"
+                    "Focus on:\n"
+                    "- Correctness\n"
+                    "- Missing steps\n"
+                    "- Better explanation\n\n"
+                    f"PREVIOUS ATTEMPT: {final_text}"
+                )
+                
+                final_text = "" # Reset for escalation
+                async for token in call_ollama_stream(question, escalation_model, system=escalation_prompt):
+                    final_text += token
+                    yield {"type": "message", "text": token}
+
+            # ✨ MASTER POLISHING PASS (Final Response Polished)
+            if not is_vision_context and len(final_text) > 50 and mode not in ["direct", "simple"]:
+                yield {"type": "thought", "text": "✨ Final Polishing: Hardening formatting for GPT-fidelity..."}
+                polished_output = ""
+                async for event in polish_response(final_text, final_model):
+                    if event.get("type") == "message":
+                        polished_output += event["text"]
+                if polished_output:
+                    final_text = polished_output
+
             # 🟢 HYBRID OUTPUT: Send the final high-fidelity version
             if final_text.strip():
                 yield {"type": "final_message", "text": final_text}
